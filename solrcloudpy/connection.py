@@ -71,6 +71,8 @@ class SolrConnection(object):
         """
         params = {'detail':'false','path':'/collections'}
         response = self.client.get('/solr/zookeeper',params).result
+        if 'children' not in response['tree'][0]:
+            return []
         data = response['tree'][0]['children']
         colls = [node['data']['title'] for node in data]
         return colls

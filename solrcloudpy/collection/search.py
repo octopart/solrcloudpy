@@ -64,7 +64,9 @@ class SolrCollectionSearch(CollectionBase):
         :param docs: a list of documents to add
         """
         message = json.dumps(docs,default=dthandler)
-        response = self._update(message).result
+        response = self._update(message)
+        if response.code != 200:
+            raise Exception(response.result)
         return response
 
     def delete(self,id=None,q=None,commit=True):
@@ -111,5 +113,25 @@ class SolrCollectionSearch(CollectionBase):
 
     def commit(self):
         """ Commit changes to a collection """
-        response = self._update('{"commit":{}}').result
+        response = self._update('{"commit":{}}')
+        if response.code != 200:
+            raise Exception(response.result.error.trace)
         return response
+
+    def analyze(self, docs):
+        path = '%s/analysis/document' % self.name
+        message = '<docs>'
+        for doc in docs:
+            message += '<doc>'
+            for (fieldname, value) in doc.items():
+                if not isinstance(value, list):
+                    value = [value]
+                for component in value:
+                    if isinstance(component, str):
+                        component = component.decode('utf-8')
+                    message += '<field name="%s">%s</field>' % (fieldname,
+                                                                component)
+            message += '</doc>'
+        message += '</docs>'
+        return self.client.request(path, params={'wt': 'json', 'indent': 'true'},
+                                   method='POST', body=message)
