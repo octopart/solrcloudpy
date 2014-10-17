@@ -31,6 +31,7 @@ class SolrConnection(object):
     :param timeout: timeout for HTTP requests
     """
     def __init__(self,server="localhost:8983",
+                 installation='solr',
                  detect_live_nodes=False,
                  user=None,
                  password=None,
@@ -38,9 +39,10 @@ class SolrConnection(object):
         self.user = user
         self.password = password
         self.timeout = timeout
+        self.installation = installation
         
         if type(server) == type(''):
-            self.url = "http://%s/solr/" % server
+            self.url = "http://%s/%s/" % (server, installation)
             servers = [self.url,self.url]
             if detect_live_nodes:
                 url = servers[0]
@@ -48,7 +50,7 @@ class SolrConnection(object):
             else:
                 self.servers = servers
         if type(server) == type([]):
-            servers = ["http://%s/solr/" % a for a in server]
+            servers = ["http://%s/%s/" % (a, installation) for a in server]
             if detect_live_nodes:
                 url = servers[0]
                 self.servers = self.detect_nodes(url)
@@ -63,14 +65,15 @@ class SolrConnection(object):
         data = json.loads(live_nodes)
         children = [d['data']['title'] for d in data['tree'][0]['children']]
         nodes = [c.replace('_solr','') for c in children]
-        return ["http://%s/solr/" % a for a in nodes]
+        return ["http://%s/%s/" % (a, self.installation) for a in nodes]
 
     def list(self):
         """
         Lists out the current collections in the cluster
         """
         params = {'detail':'false','path':'/collections'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.installation,
+                                   params).result
         if 'children' not in response['tree'][0]:
             return []
         data = response['tree'][0]['children']
@@ -90,7 +93,8 @@ class SolrConnection(object):
         collections are returned, along with their state, otherwise an `OK` message is returned
         """
         params = {'detail':'true','path':'/clusterstate.json'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.installation,
+                                   params).result
         data = json.loads(response['znode']['data'])
         res = []
         collections = self.list()
@@ -119,7 +123,8 @@ class SolrConnection(object):
         Gets the cluster leader
         """
         params = {'detail':'true','path':'/overseer_elect/leader'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.installation,
+                                   params).result
         return json.loads(response['znode']['data'])
 
     @property
@@ -128,10 +133,11 @@ class SolrConnection(object):
         Lists all nodes that are currently online
         """
         params = {'detail':'true','path':'/live_nodes'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.installation,
+                                   params).result
         children = [d['data']['title'] for d in response['tree'][0]['children']]
         nodes = [c.replace('_solr','') for c in children]
-        return ["http://%s/solr/" % a for a in nodes]
+        return ["http://%s/%s/" % (a, self.installation) for a in nodes]
 
     def create_collection(self,collname, *args, **kwargs):
         r"""

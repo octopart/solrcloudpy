@@ -81,6 +81,7 @@ class SolrCollectionAdmin(CollectionBase):
         # this collection doesn't exist yet, actually create it
         if not self.exists() or force == True:
             res = self.client.get('admin/collections',params).result
+            print res["failure"]
             if hasattr(res,'success'):
                 # Create the index and wait until it's available
                 while True:
@@ -98,7 +99,7 @@ class SolrCollectionAdmin(CollectionBase):
 
     def _is_index_created(self):
         server = list(self.connection.servers)[0]
-        req = requests.get('%s/solr/%s' % (server,self.name))
+        req = requests.get('%s/%s/%s' % (server,self.connection.installation,self.name))
         if req.status_code != requests.codes.ok:
             return False
         return True
@@ -108,7 +109,8 @@ class SolrCollectionAdmin(CollectionBase):
         Determines if this collection is an alias for a 'real' collection
         """
         params = {'detail':'true','path':'/aliases.json'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.connection.installation,
+                                   params).result
         if hasattr(response['znode'],'data'):
             data = json.loads(response['znode']['data'])
         else:
@@ -204,7 +206,8 @@ class SolrCollectionAdmin(CollectionBase):
             return {"warn":"no state info avilable for aliases"}
 
         params = {'detail':'true','path':'/clusterstate.json'}
-        response = self.client.get('/solr/zookeeper',params).result
+        response = self.client.get('/%s/zookeeper' % self.connection.installation,
+                                   params).result
         data = json.loads(response['znode']['data'])
         return data[self.name]
 

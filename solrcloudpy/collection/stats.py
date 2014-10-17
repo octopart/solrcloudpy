@@ -20,7 +20,8 @@ class SolrIndexStats(object):
 
         """
         params = {'stats':'true','cat':'CACHE'}
-        result = self.client.get('/solr/%s/admin/mbeans'% self.name,params).result.dict
+        result = self.client.get('/%s/%s/admin/mbeans'% (self.connection.installation, self.name),
+                                 params).result.dict
         caches = result['solr-mbeans']['CACHE']
         res = {}
         for cache,info in caches.iteritems():
@@ -38,7 +39,8 @@ class SolrIndexStats(object):
         Get query handler statistics for all of the handlers used in this Solr node
         """
         params = {'stats':'true','cat':'QUERYHANDLER'}
-        result = self.client.get('/solr/%s/admin/mbeans'% self.name,params).result.dict
+        result = self.client.get('/%s/%s/admin/mbeans'% (self.connection.installation, self.name),
+                                 params).result.dict
         caches = result['solr-mbeans']['QUERYHANDLER']
         res = {}
         for cache,info in caches.iteritems():

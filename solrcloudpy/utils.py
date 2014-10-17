@@ -54,6 +54,8 @@ class _Request(object):
         return self.request(path,params,'POST',body)
 
     def get(self,path,params):
+        print path
+        print params
         return self.request(path,params,method='GET')
 
 class CollectionBase(object):
