@@ -64,7 +64,7 @@ class SolrConnection(object):
         live_nodes = urllib.urlopen(url).read()
         data = json.loads(live_nodes)
         children = [d['data']['title'] for d in data['tree'][0]['children']]
-        nodes = [c.replace('_solr','') for c in children]
+        nodes = [c.replace('_%s' % self.installation,'') for c in children]
         return ["http://%s/%s/" % (a, self.installation) for a in nodes]
 
     def list(self):
