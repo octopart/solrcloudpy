@@ -81,7 +81,6 @@ class SolrCollectionAdmin(CollectionBase):
         # this collection doesn't exist yet, actually create it
         if not self.exists() or force == True:
             res = self.client.get('admin/collections',params).result
-            print res["failure"]
             if hasattr(res,'success'):
                 # Create the index and wait until it's available
                 while True:
